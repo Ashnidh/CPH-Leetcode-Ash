@@ -9,19 +9,22 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onCommand:cph-leetcode-ash.fetch",
+    "onCommand:cph-leetcode-ash.run"
+  ],
   "main": "./src/extension.js",
   "contributes": {
     "commands": [
       {
-      "command": "cph-leetcode-ash.fetch",
-      "title": "Fetch Leetcode Test Cases"
+        "command": "cph-leetcode-ash.fetch",
+        "title": "Fetch Leetcode Test Cases"
       },
       {
         "command": "cph-leetcode-ash.run",
         "title": "Run Leetcode Test Cases"
       }
-  ]
+    ]
   },
   "scripts": {
     "lint": "eslint .",
@@ -29,11 +32,14 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.96.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "eslint": "^9.16.0",
+    "@types/vscode": "^1.96.0",
     "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1"
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.16.0"
+  },
+  "dependencies": {
+    "jsdom": "^26.0.0"
   }
 }

@@ -1,6 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+// const fetchAndStore = require('./fetch').fetchAndStore
+const { extractTitleSlug, fetchAndStore } = require('./fetch')
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -19,9 +21,13 @@ function activate(context) {
 	// The commandId parameter must match the command field in package.json
 	const fetch_disposable = vscode.commands.registerCommand('cph-leetcode-ash.fetch', function () {
 		// The code you place here will be executed every time your command is executed
-
+		const url = "https://leetcode.com/problems/reverse-integer/description/";
+		let casePath = `D:\\Ashnidh\\Program Tests\\cph_project\\vsc_extension\\cph_leetcode_ash\\cph-leetcode-ash\\`;
+		const titleSlug = extractTitleSlug(url);
+		fetchAndStore(url, casePath)
+		// fetchAndStore(url);
 		// Display a message box to the user
-		vscode.window.showInformationMessage('Fetching!');
+		vscode.window.showInformationMessage(`Fetching ${titleSlug}!`);
 	});
 	const run_disposable = vscode.commands.registerCommand('cph-leetcode-ash.run', function () {
 		// The code you place here will be executed every time your command is executed

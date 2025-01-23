@@ -1,20 +1,20 @@
-import * as fs from 'fs';
-import jsdom from "jsdom";
+const fs = require('fs');
+const jsdom = require("jsdom");
+const vscode = require('vscode');
 
-
-function storeCase(file_name, case_content){
+function storeCase(file_name, case_content, casePath){
   if (!fs.existsSync(casePath)) 
     fs.mkdirSync(casePath, { recursive: true });
   
-  // console.log(`Directory '${directoryPath}' created.`);
+  // vscode.window.showInformationMessage(`Directory '${directoryPath}' created.`);
   
   const file_path = casePath + `/` + file_name + `.txt`;
   fs.writeFile(file_path, case_content, 'utf8', (error) => {
     if (error) {
-      console.error(`An error occurred while writing to the file: ${file_path}`, error);
+      vscode.window.showErrorMessage(`An error occurred while writing to the file: ${file_path}`, error);
       return;
     }
-    console.log(`File '${file_path}' has been written successfully.`);
+    // vscode.window.showInformationMessage(`File '${file_path}' has been written successfully.`);
   });
 }
 
@@ -36,67 +36,69 @@ function parseSampleCase(inputString, extract_type) {
       result = outputMatch[1].trim() + `\n`;
     }
     else{
-      console.log(`Invalid extraction type!`);
+      vscode.window.showInformationMessage(`Invalid extraction type!`);
     }
     return result;  
   }
   
-function parse(html){
+function parse(html, casePath){
     const dom = new jsdom.JSDOM(html);
     let sample_cases = dom.window.document.querySelectorAll(`pre`); // 'Hello world'
     for (let i = 0; i < sample_cases.length; i++) {
       const sample_case = sample_cases[i].textContent;
-      // console.log("Input \n");
-      // console.log(parseSampleCase(sample_case, 1));
-      // console.log("Output \n");
-      // console.log(parseSampleCase(sample_case, 2));
+      // vscode.window.showInformationMessage("Input \n");
+      // vscode.window.showInformationMessage(parseSampleCase(sample_case, 1));
+      // vscode.window.showInformationMessage("Output \n");
+      // vscode.window.showInformationMessage(parseSampleCase(sample_case, 2));
       let input_name = `input_${i+1}`;
       let output_name = `output_${i+1}`;
-      storeCase(input_name, parseSampleCase(sample_case, 1));
-      storeCase(output_name, parseSampleCase(sample_case, 2));
+      storeCase(input_name, parseSampleCase(sample_case, 1), casePath);
+      storeCase(output_name, parseSampleCase(sample_case, 2), casePath);
       
       //   task.addTest(parseSampleCase(sample_case, true), parseSampleCase(sample_case, false));
       
-      // console.log(sample_cases[i].textContent);
+      // vscode.window.showInformationMessage(sample_cases[i].textContent);
     }
     
     // return task.build();
   }
   
-export function extractTitleSlug(ques_url){
+ function extractTitleSlug(ques_url){
     const regex = /https:\/\/leetcode\.com\/problems\/([^\/]*)/;
     const match = ques_url.match(regex);
     return match ? match[1] : null;
   }
   
-export function fetchAndStore(ques_url){
+ function fetchAndStore(ques_url, casePath){
     // const api_url = `https://alfa-leetcode-api.onrender.com/select?titleSlug=` + extractTitleSlug(ques_url);
     const api_url = `http://localhost:3031/select?titleSlug=` + extractTitleSlug(ques_url);
     let p = fetch(api_url);
     p.then((value1)=>{
-      console.log(value1.status)
-      console.log(value1.ok)
+      vscode.window.showInformationMessage(value1.status)
+      vscode.window.showInformationMessage(value1.ok)
       return value1.json()
     }).then((data)=>{
       
       const ques_title = data["titleSlug"]
       
       const html = data["question"];
-      // console.log(html);
-      casePath = casePath + `/${ques_title}`;
+      // vscode.window.showInformationMessage(html);
+      casePath = casePath + `${caseDirName}\\${ques_title}`;
       
-      let parsingDone = new Promise((resolve, reject) =>{
-        parse(html);
+      let parsingDone = new Promise((resolve) =>{
+        parse(html, casePath);
         resolve(56);
       })
       
-      parsingDone.then((value)=>{
-        console.log(`Problem Parsed!`);
+      parsingDone.then(()=>{
+        vscode.window.showInformationMessage(`Problem Parsed!`);
       }, (error)=>{
-        console.log(`Unable to parse the problem! ${error}`);
+        vscode.window.showInformationMessage(`Unable to parse the problem! ${error}`);
       })
       
       
     })
   }
-  let casePath =  `./cases`
+  const caseDirName =  `cases`
+
+  module.exports = { extractTitleSlug, fetchAndStore };
