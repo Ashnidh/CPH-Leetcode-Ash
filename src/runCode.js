@@ -1,16 +1,10 @@
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
+const { spawnSync } = require('child_process');
 const fs = require('fs');
-const { resolve } = require('path');
+// const vscode = require('vscode');
 
-// async function compileCode(titleSlug){
-//   exec(`g++ -std=c++17 -o ${dirPath}${titleSlug} ${dirPath}${titleSlug}.cpp`);
-//   setTimeout(()=>{
-
-//   })
-// }
-
-function compareOutputs(stdout, titleSlug, case_no){
+function compareOutputs(stdout, titleSlug, case_no, casePath){
   const expectedOpFile = `${casePath}${outfileName}${case_no}.txt`
   let expextedOp = fs.readFileSync(expectedOpFile, { encoding: 'utf8', flag: 'r' });
   expextedOp = expextedOp.trim()
@@ -27,15 +21,21 @@ function compareOutputs(stdout, titleSlug, case_no){
   }
 }
 
-async function runCase(titleSlug, case_no, pass_obj) {
+async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, root_path) {
   console.log(`Running TestCase ${case_no}: `);
   try {
     if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
       let case_input = fs.readFileSync(`${casePath}${inputName}${case_no}.txt`, { encoding: 'utf8', flag: 'r' });
       case_input = case_input.trim();
       console.log(`Input: ${case_input}`);
-      const { stdout } = await exec(`${dirPath}${titleSlug}.exe < ${casePath}${inputName}${case_no}.txt`);
-      pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no);
+      const pythonProcess = await spawnSync('python3', [
+        `${root_path}src\\myPyRunner.py`,
+        'first_function',
+        `${codePath}${titleSlug}.py`,
+        `${casePath}${inputName}${case_no}.txt`
+      ]);
+      const stdout = pythonProcess.stdout?.toString()?.trim();
+      pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
       return pass_obj.passed;
     }
     else{
@@ -50,7 +50,30 @@ async function runCase(titleSlug, case_no, pass_obj) {
   }
 }
 
-async function getTotalCases(titleSlug){
+async function runCase(titleSlug, case_no, pass_obj, casePath, codePath) {
+  console.log(`Running TestCase ${case_no}: `);
+  try {
+    if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
+      let case_input = fs.readFileSync(`${casePath}${inputName}${case_no}.txt`, { encoding: 'utf8', flag: 'r' });
+      case_input = case_input.trim();
+      console.log(`Input: ${case_input}`);
+      const { stdout } = await exec(`${codePath}${titleSlug}.exe < ${casePath}${inputName}${case_no}.txt`);
+      pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
+      return pass_obj.passed;
+    }
+    else{
+      console.log(`Input file NOT FOUND for the TestCase: ${case_no}`)
+      pass_obj.passed = false;
+    }
+    // console.log(`Testcase ${case_no}: ${pass_obj.passed}`);
+  } catch (error) {
+    console.error(`Error in Running Test Case: ${case_no}:`, error);
+    pass_obj.passed = false;
+    return false;
+  }
+}
+
+async function getTotalCases(casePath){
   let totalCases = 0;
   while(fs.existsSync(`${casePath}${inputName}${totalCases+1}.txt`)){
     totalCases ++;
@@ -59,14 +82,19 @@ async function getTotalCases(titleSlug){
   return totalCases;
 }
 
-async function runAllCases(titleSlug) {
-  const totalCases = await getTotalCases(titleSlug);
+async function runAllCases(language, titleSlug, casePath, codePath, root_path) {
+  const totalCases = await getTotalCases(casePath);
   let wrongCase = -1;
   let case_no;
   console.log(`Running TestCases...\n`);
   let pass_obj = { passed: true };
   for (case_no = 1; case_no <= totalCases; case_no++) {
-    await runCase(titleSlug, case_no, pass_obj);
+    if(language == "py"){
+      await runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, root_path);
+    }
+    else{
+      await runCase(titleSlug, case_no, pass_obj, casePath, codePath);
+    }
     console.log(``);
     if(!pass_obj.passed){
       if(wrongCase < 0)
@@ -82,9 +110,25 @@ async function runAllCases(titleSlug) {
   }
 }
 
-async function mainFunc(){
-  let compileCode = new Promise((resolve, reject)=>{
-    exec(`g++ -std=c++17 -o ${dirPath}${titleSlug} ${dirPath}${titleSlug}.cpp`);
+// async function getLanguage(sourceCode) {
+//   const match = sourceCode.match(/\.(\w+)$/);
+//   return match ? match[1] : null;
+// }
+
+async function mainFunc(titleSlug, root_path, language){
+  const casePath = root_path + `${caseDirName}\\${titleSlug}\\`;
+  const codePath = root_path + `${codeDirName}\\`
+  if(language == "py"){
+    runAllCases(language, titleSlug, casePath, codePath, root_path);   
+  }
+  else{
+    let compileCode = new Promise((resolve)=>{
+      if(language == "cpp" ){
+      exec(`g++ -std=c++17 -o ${codePath}${titleSlug} ${codePath}${titleSlug}.cpp`);
+    }
+    if(language == "c" ){
+      exec(`gcc -o ${codePath}${titleSlug} ${codePath}${titleSlug}.c`);
+    }
     setTimeout(()=>{
       console.log(`Source Code file compiled.`)
       resolve(56);
@@ -97,39 +141,34 @@ async function mainFunc(){
         clearInterval(searchInterval);
         reject(-1);
       }
-      else if (fs.existsSync(`${dirPath}${titleSlug}.exe`)){
+      else if (fs.existsSync(`${codePath}${titleSlug}.exe`)){
         resolve(56);
         clearInterval(searchInterval);
         // console.log(`Code Executable Found!`);
       }
     }, 10);
   })
-
-  await compileCode;
-  let search_completed = await searchExecutable;
-  if(search_completed == 56){
-    setTimeout(()=>{      
-
-      runAllCases(titleSlug);   
-
-      }, 10);
-  }
-  else{
-    console.log(`Executable File Not Found!`);
+    await compileCode;
+    let search_completed = await searchExecutable;
+    if(search_completed == 56){
+      setTimeout(()=>{      
+  
+        runAllCases(language, titleSlug, casePath, codePath);   
+  
+        }, 10);
+    }
+    else{
+      console.log(`Executable File Not Found!`);
+    }
   }
 }
 
-const titleSlug = `reverse-integer`;
-
-let mainDirName =  `mainDir`;
-
-const dirPath = `.\\my_pro\\code\\`;
-const casePath = `.\\my_pro\\${mainDirName}\\${titleSlug}\\`;
-// const case_no = 3;
+const caseDirName =  `cases`
+const codeDirName =  `codes`
 const inputName = `input_`;
 const outfileName = `output_`;
-
 let searchCounter = 400;
 let searchInterval;
 
-mainFunc();
+
+module.exports = { mainFunc };

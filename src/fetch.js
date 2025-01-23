@@ -69,7 +69,7 @@ function parse(html, casePath){
     return match ? match[1] : null;
   }
   
- function fetchAndStore(ques_url, casePath){
+ function fetchAndStore(ques_url, root_path){
     // const api_url = `https://alfa-leetcode-api.onrender.com/select?titleSlug=` + extractTitleSlug(ques_url);
     const api_url = `http://localhost:3031/select?titleSlug=` + extractTitleSlug(ques_url);
     let p = fetch(api_url);
@@ -79,11 +79,11 @@ function parse(html, casePath){
       return value1.json()
     }).then((data)=>{
       
-      const ques_title = data["titleSlug"]
+      const titleSlug = data["titleSlug"]
       
       const html = data["question"];
       // vscode.window.showInformationMessage(html);
-      casePath = casePath + `${caseDirName}\\${ques_title}`;
+      const casePath = root_path + `${caseDirName}\\${titleSlug}\\`;
       
       let parsingDone = new Promise((resolve) =>{
         parse(html, casePath);
