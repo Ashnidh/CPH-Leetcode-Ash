@@ -9,42 +9,43 @@ function compareOutputs(stdout, titleSlug, case_no, casePath){
   let expextedOp = fs.readFileSync(expectedOpFile, { encoding: 'utf8', flag: 'r' });
   expextedOp = expextedOp.trim()
   stdout = stdout.trim();
-  console.log(`Expected Output: ${expextedOp}`);
-  console.log(`Recieved Output: ${stdout}`);
+  outputChannel.appendLine(`Expected Output: ${expextedOp}`);
+  outputChannel.appendLine(`Recieved Output: ${stdout}`);
   if(stdout == expextedOp){
-    console.log(`TestCase: ${case_no} Passed!`);
+    outputChannel.appendLine(`TestCase: ${case_no} Passed!`);
     return true;
   }
   else{
-    console.log(`TestCase: ${case_no} Failed!`);
+    outputChannel.appendLine(`TestCase: ${case_no} Failed!`);
     return false;
   }
 }
 
 async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_root_path) {
-  console.log(`Running TestCase ${case_no}: `);
+  outputChannel.appendLine(`Running TestCase ${case_no}: `);
   try {
     if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
       let case_input = fs.readFileSync(`${casePath}${inputName}${case_no}.txt`, { encoding: 'utf8', flag: 'r' });
       case_input = case_input.trim();
-      console.log(`Input: ${case_input}`);
+      outputChannel.appendLine(`Input: ${case_input}`);
       const pythonProcess = await spawnSync('python3', [
         `${ext_root_path}src\\myPyRunner.py`,
         'first_function',
         `${codePath}${titleSlug}.py`,
         `${casePath}${inputName}${case_no}.txt`
       ]);
-      // console.log(`${ext_root_path}src\\myPyRunner.py`);
+      // outputChannel.appendLine(`${ext_root_path}src\\myPyRunner.py`);
       const stdout = pythonProcess.stdout?.toString()?.trim();
       pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
       return pass_obj.passed;
     }
     else{
-      console.log(`Input file NOT FOUND for the TestCase: ${case_no}`)
+      outputChannel.appendLine(`Input file NOT FOUND for the TestCase: ${case_no}`)
       pass_obj.passed = false;
     }
-    // console.log(`Testcase ${case_no}: ${pass_obj.passed}`);
+    // outputChannel.appendLine(`Testcase ${case_no}: ${pass_obj.passed}`);
   } catch (error) {
+    vscode.window.showErrorMessage(`Error in Running Test Case: ${case_no}:`, error);
     console.error(`Error in Running Test Case: ${case_no}:`, error);
     pass_obj.passed = false;
     return false;
@@ -52,22 +53,23 @@ async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_r
 }
 
 async function runCase(titleSlug, case_no, pass_obj, casePath, codePath) {
-  console.log(`Running TestCase ${case_no}: `);
+  outputChannel.appendLine(`Running TestCase ${case_no}: `);
   try {
     if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
       let case_input = fs.readFileSync(`${casePath}${inputName}${case_no}.txt`, { encoding: 'utf8', flag: 'r' });
       case_input = case_input.trim();
-      console.log(`Input: ${case_input}`);
+      outputChannel.appendLine(`Input: ${case_input}`);
       const { stdout } = await exec(`${codePath}${titleSlug}.exe < ${casePath}${inputName}${case_no}.txt`);
       pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
       return pass_obj.passed;
     }
     else{
-      console.log(`Input file NOT FOUND for the TestCase: ${case_no}`)
+      outputChannel.appendLine(`Input file NOT FOUND for the TestCase: ${case_no}`)
       pass_obj.passed = false;
     }
-    // console.log(`Testcase ${case_no}: ${pass_obj.passed}`);
+    // outputChannel.appendLine(`Testcase ${case_no}: ${pass_obj.passed}`);
   } catch (error) {
+    vscode.window.showErrorMessage(`Error in Running Test Case: ${case_no}:`, error);
     console.error(`Error in Running Test Case: ${case_no}:`, error);
     pass_obj.passed = false;
     return false;
@@ -79,7 +81,7 @@ async function getTotalCases(casePath){
   while(fs.existsSync(`${casePath}${inputName}${totalCases+1}.txt`)){
     totalCases ++;
   }
-  console.log(`Total TestCases found: ${totalCases}`);
+  outputChannel.appendLine(`Total TestCases found: ${totalCases}`);
   return totalCases;
 }
 
@@ -87,7 +89,7 @@ async function runAllCases(language, titleSlug, casePath, codePath, ext_root_pat
   const totalCases = await getTotalCases(casePath);
   let wrongCase = -1;
   let case_no;
-  console.log(`Running TestCases...\n`);
+  outputChannel.appendLine(`Running TestCases...\n`);
   let pass_obj = { passed: true };
   for (case_no = 1; case_no <= totalCases; case_no++) {
     if(language == "py"){
@@ -96,7 +98,7 @@ async function runAllCases(language, titleSlug, casePath, codePath, ext_root_pat
     else{
       await runCase(titleSlug, case_no, pass_obj, casePath, codePath);
     }
-    console.log(``);
+    outputChannel.appendLine(``);
     if(!pass_obj.passed){
       if(wrongCase < 0)
         wrongCase = case_no;
@@ -105,9 +107,11 @@ async function runAllCases(language, titleSlug, casePath, codePath, ext_root_pat
   }
   if(pass_obj.passed){
     vscode.window.showInformationMessage("All TestCases Passed!");
+    outputChannel.appendLine("All TestCases Passed!");
   }
   else{
-    vscode.window.showInformationMessage(`Wrong answer on TestCase: ${wrongCase}`);
+    vscode.window.showErrorMessage(`Wrong answer on TestCase: ${wrongCase}`);
+    outputChannel.appendLine(`Wrong answer on TestCase: ${wrongCase}`);
   }
 }
 
@@ -122,6 +126,9 @@ function getLanguage(sourceCode) {
 async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
   const casePath = activeFileDirPath + `${caseDirName}\\${titleSlug}\\`;
   const codePath = activeFileDirPath;
+  outputChannel = await vscode.window.createOutputChannel(`${titleSlug}.${language}`);
+  outputChannel.show();
+  
   if(language == "py"){
     runAllCases(language, titleSlug, casePath, codePath, ext_root_path);   
   }
@@ -134,7 +141,7 @@ async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
       exec(`gcc -o ${codePath}${titleSlug} ${codePath}${titleSlug}.c`);
     }
     setTimeout(()=>{
-      console.log(`Source Code file compiled.`)
+      outputChannel.appendLine(`Source Code file compiled.`)
       resolve(56);
     }, 10)
   });
@@ -148,7 +155,7 @@ async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
       else if (fs.existsSync(`${codePath}${titleSlug}.exe`)){
         resolve(56);
         clearInterval(searchInterval);
-        // console.log(`Code Executable Found!`);
+        // outputChannel.appendLine(`Code Executable Found!`);
       }
     }, 10);
   })
@@ -162,7 +169,7 @@ async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
         }, 10);
     }
     else{
-      console.log(`Executable File Not Found!`);
+      outputChannel.appendLine(`Executable File Not Found!`);
     }
   }
 }
@@ -172,6 +179,7 @@ const inputName = `input_`;
 const outfileName = `output_`;
 let searchCounter = 400;
 let searchInterval;
+let outputChannel;
 
 
 module.exports = { mainFunc, getLanguage };
