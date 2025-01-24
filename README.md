@@ -12,6 +12,14 @@ Supported Languages:
 * Displays detailed description each TestCase result **{input, expected_output, recieved output}** and errors (if exists) in the output terminal. 
 * Displays the final verdict as a VSCode Notification.
 
+## Setting Up ( Install from source )
+```
+git clone https://github.com/Ashnidh/CPH-Leetcode-Ash.git
+cd CPH-Leetcode-Ash
+npm install
+```
+And then you can run it in a debug window.
+
 ## Commands
 
 <div align="center">
