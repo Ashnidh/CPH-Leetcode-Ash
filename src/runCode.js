@@ -21,7 +21,7 @@ function compareOutputs(stdout, titleSlug, case_no, casePath){
   }
 }
 
-async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_root_path) {
+async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, src_root_path) {
   outputChannel.appendLine(`Running TestCase ${case_no}: `);
   try {
     if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
@@ -29,12 +29,12 @@ async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_r
       case_input = case_input.trim();
       outputChannel.appendLine(`Input: ${case_input}`);
       const pythonProcess = await spawnSync('python3', [
-        `${ext_root_path}src\\myPyRunner.py`,
+        `${src_root_path}\\myPyRunner.py`,
         'first_function',
         `${codePath}${titleSlug}.py`,
         `${casePath}${inputName}${case_no}.txt`
       ]);
-      // outputChannel.appendLine(`${ext_root_path}src\\myPyRunner.py`);
+      // outputChannel.appendLine(`${src_root_path}src\\myPyRunner.py`);
       const stdout = pythonProcess.stdout?.toString()?.trim();
       pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
       return pass_obj.passed;
@@ -85,7 +85,7 @@ async function getTotalCases(casePath){
   return totalCases;
 }
 
-async function runAllCases(language, titleSlug, casePath, codePath, ext_root_path) {
+async function runAllCases(language, titleSlug, casePath, codePath, src_root_path) {
   const totalCases = await getTotalCases(casePath);
   let wrongCase = -1;
   let case_no;
@@ -93,7 +93,7 @@ async function runAllCases(language, titleSlug, casePath, codePath, ext_root_pat
   let pass_obj = { passed: true };
   for (case_no = 1; case_no <= totalCases; case_no++) {
     if(language == "py"){
-      await runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_root_path);
+      await runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, src_root_path);
     }
     else{
       await runCase(titleSlug, case_no, pass_obj, casePath, codePath);
@@ -123,14 +123,14 @@ function getLanguage(sourceCode) {
   return [ retName, retExt ]; 
 }
 
-async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
+async function mainFunc(titleSlug, activeFileDirPath, language, src_root_path){
   const casePath = activeFileDirPath + `${caseDirName}\\${titleSlug}\\`;
   const codePath = activeFileDirPath;
   outputChannel = await vscode.window.createOutputChannel(`${titleSlug}.${language}`);
   outputChannel.show();
   
   if(language == "py"){
-    runAllCases(language, titleSlug, casePath, codePath, ext_root_path);   
+    runAllCases(language, titleSlug, casePath, codePath, src_root_path);   
   }
   else{
     let compileCode = new Promise((resolve)=>{

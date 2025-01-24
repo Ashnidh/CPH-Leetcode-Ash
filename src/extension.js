@@ -16,7 +16,7 @@ const path = require("path");
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "cph-leetcode-ash" is now active!');
-	
+
 	// let root_path = `D:\\Ashnidh\\Program_Tests\\cph_project\\vsc_extension\\cph_leetcode_ash\\cph-leetcode-ash\\`;
 
 	// The command has been defined in the package.json file
@@ -34,13 +34,13 @@ const path = require("path");
 	});
 	const run_disposable = vscode.commands.registerCommand('cph-leetcode-ash.run', function () {
 		// The code you place here will be executed every time your command is executed
-		const ext_root_path = `D:\\Ashnidh\\Program_Tests\\cph_project\\vsc_extension\\cph_leetcode_ash\\cph-leetcode-ash\\`;
+		const src_root_path = __dirname;
 		const  currentlyOpenTabfilePath = vscode.window.activeTextEditor.document.fileName;
 		const currentlyOpenTabfileName = path.basename(currentlyOpenTabfilePath);
 		const matchCodeDir = currentlyOpenTabfilePath.match(new RegExp(`^(.*)${currentlyOpenTabfileName}$`));
 		const codeDir = matchCodeDir ? matchCodeDir[1] : null;
 		const [ titleSlug, language ] = getLanguage(currentlyOpenTabfileName)
-		mainFunc(titleSlug, codeDir, language, ext_root_path);
+		mainFunc(titleSlug, codeDir, language, src_root_path);
 		// Display a message box to the user
 		vscode.window.showInformationMessage(`Running ${titleSlug}.${language}!`);
 	});
