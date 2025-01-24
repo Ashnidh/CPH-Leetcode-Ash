@@ -40,6 +40,7 @@
     "eslint": "^9.16.0"
   },
   "dependencies": {
+    "cph-leetcode-ash": "github:Ashnidh/CPH-Leetcode-Ash",
     "jsdom": "^26.0.0"
   }
 }

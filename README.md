@@ -1,65 +1,40 @@
-# cph-leetcode-ash README
+# CPH-Leetcode-Ash
+This is a CPH VS Code extension for Leetcode. Supports multiple Languages! By Ashnidh :)
 
-This is the README for your extension "cph-leetcode-ash". After writing up a brief description, we recommend including the following sections.
+Supported Languages:
+* C
+* C++
+* Python
 
 ## Features
+* Requires only problem URL to fetch, parse and store multiple test cases. Custom TestCases can be added.
+* Auto-detects the language of your code to run TestCases.
+* Displays detailed description each TestCase result **{input, expected_output, recieved output}** and errors (if exists) in the output terminal. 
+* Displays the final verdict as a VSCode Notification.
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+## Commands
 
-For example if there is an image subfolder under your extension project workspace:
+<div align="center">
+  <img src="media/command_fetch.png" alt="commands" />
+</div> 
 
-\!\[feature X\]\(images/feature-x.png\)
+* ### ```cph-leetcode-ash.fetch```: Fetch Leetcode Test Cases
+    On Running - Asks for Leetcode Problem URL.
+        <div align="center">
+        <img src="media/EnterURL.png" alt="commands" />
+        </div> 
+    When the URL is entered, it creates a directory ```./cases/question_titleSlug/``` in the currently active working directory where all the input and output cases are parsed and saved as ```input_1.txt```, ```output_1.txt``` for every tescase
+    (Multiple testcases are supported!!). 
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+    While adding a custom TestCase, new input and output files should be created and stored with the same naming convension.
 
-## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+* ### ```cph-leetcode-ash.run```: Run Leetcode Test Cases
+    Switch your currenlty active VSCode tab to the solution source code **(.cpp/.c/.py)** and run the command.
 
-## Extension Settings
+    It automatically idenifies the language of the written code solution and displays detailed description each TestCase result **{input, expected_output, recieved output}** and errors (if exists) in the output terminal. 
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+    It also displays the final verdict as a VSCode Notification.
 
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+## Dependencies
+*     "jsdom": "^26.0.0"
