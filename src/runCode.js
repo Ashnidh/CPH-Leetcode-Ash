@@ -2,7 +2,7 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 const { spawnSync } = require('child_process');
 const fs = require('fs');
-// const vscode = require('vscode');
+const vscode = require('vscode');
 
 function compareOutputs(stdout, titleSlug, case_no, casePath){
   const expectedOpFile = `${casePath}${outfileName}${case_no}.txt`
@@ -21,7 +21,7 @@ function compareOutputs(stdout, titleSlug, case_no, casePath){
   }
 }
 
-async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, root_path) {
+async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_root_path) {
   console.log(`Running TestCase ${case_no}: `);
   try {
     if(fs.existsSync(`${casePath}${inputName}${case_no}.txt`)){
@@ -29,11 +29,12 @@ async function runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, root_
       case_input = case_input.trim();
       console.log(`Input: ${case_input}`);
       const pythonProcess = await spawnSync('python3', [
-        `${root_path}src\\myPyRunner.py`,
+        `${ext_root_path}src\\myPyRunner.py`,
         'first_function',
         `${codePath}${titleSlug}.py`,
         `${casePath}${inputName}${case_no}.txt`
       ]);
+      // console.log(`${ext_root_path}src\\myPyRunner.py`);
       const stdout = pythonProcess.stdout?.toString()?.trim();
       pass_obj.passed = pass_obj.passed & compareOutputs(stdout, titleSlug, case_no, casePath);
       return pass_obj.passed;
@@ -82,7 +83,7 @@ async function getTotalCases(casePath){
   return totalCases;
 }
 
-async function runAllCases(language, titleSlug, casePath, codePath, root_path) {
+async function runAllCases(language, titleSlug, casePath, codePath, ext_root_path) {
   const totalCases = await getTotalCases(casePath);
   let wrongCase = -1;
   let case_no;
@@ -90,7 +91,7 @@ async function runAllCases(language, titleSlug, casePath, codePath, root_path) {
   let pass_obj = { passed: true };
   for (case_no = 1; case_no <= totalCases; case_no++) {
     if(language == "py"){
-      await runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, root_path);
+      await runPyCase(titleSlug, case_no, pass_obj, casePath, codePath, ext_root_path);
     }
     else{
       await runCase(titleSlug, case_no, pass_obj, casePath, codePath);
@@ -103,23 +104,26 @@ async function runAllCases(language, titleSlug, casePath, codePath, root_path) {
     }
   }
   if(pass_obj.passed){
-    console.log("All TestCases Passed!");
+    vscode.window.showInformationMessage("All TestCases Passed!");
   }
   else{
-    console.log(`Wrong answer on TestCase: ${wrongCase}`);
+    vscode.window.showInformationMessage(`Wrong answer on TestCase: ${wrongCase}`);
   }
 }
 
-// async function getLanguage(sourceCode) {
-//   const match = sourceCode.match(/\.(\w+)$/);
-//   return match ? match[1] : null;
-// }
+function getLanguage(sourceCode) {
+  const matchExt = sourceCode.match(/\.(\w+)$/);
+  const matchName = sourceCode.match(/^(.*)\.[^\.]+$/);
+  const retName = matchName ? matchName[1] : sourceCode;
+  const retExt = matchExt ? matchExt[1] : null;
+  return [ retName, retExt ]; 
+}
 
-async function mainFunc(titleSlug, root_path, language){
-  const casePath = root_path + `${caseDirName}\\${titleSlug}\\`;
-  const codePath = root_path + `${codeDirName}\\`
+async function mainFunc(titleSlug, activeFileDirPath, language, ext_root_path){
+  const casePath = activeFileDirPath + `${caseDirName}\\${titleSlug}\\`;
+  const codePath = activeFileDirPath;
   if(language == "py"){
-    runAllCases(language, titleSlug, casePath, codePath, root_path);   
+    runAllCases(language, titleSlug, casePath, codePath, ext_root_path);   
   }
   else{
     let compileCode = new Promise((resolve)=>{
@@ -164,11 +168,10 @@ async function mainFunc(titleSlug, root_path, language){
 }
 
 const caseDirName =  `cases`
-const codeDirName =  `codes`
 const inputName = `input_`;
 const outfileName = `output_`;
 let searchCounter = 400;
 let searchInterval;
 
 
-module.exports = { mainFunc };
+module.exports = { mainFunc, getLanguage };
