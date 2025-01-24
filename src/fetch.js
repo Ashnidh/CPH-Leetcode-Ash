@@ -77,8 +77,7 @@ function parse(html, casePath){
       if(ques_url == "")
           return;
       const titleSlug = extractTitleSlugFromURL(ques_url);
-      // const api_url = `https://alfa-leetcode-api.onrender.com/select?titleSlug=` + titleSlug;
-      const api_url = `http://localhost:3031/select?titleSlug=` + titleSlug;
+      const api_url = `https://alfa-leetcode-api.onrender.com/select?titleSlug=` + titleSlug;
       vscode.window.showInformationMessage(`Fetching ${titleSlug}!`);
       let p = fetch(api_url);
     p.then((value1)=>{
