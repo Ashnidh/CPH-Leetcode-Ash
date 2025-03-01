@@ -44,5 +44,8 @@ And then you can run it in a debug window.
 
     It also displays the final verdict as a VSCode Notification.
 
+## Video Demonstration
+Check out the [video demo here](https://drive.google.com/file/d/1lCVqQR0UiCsA2hElexFWirr9KftVdUH1/view?usp=sharing).
+
 ## Dependencies
 *     "jsdom": "^26.0.0"
